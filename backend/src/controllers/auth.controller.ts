@@ -49,13 +49,14 @@ export const isEmailTaken = async (email: string) => {
   }
 };
 
-const registerUser = async (authDetails: AuthDetails) => {
+export const registerUser = async (authDetails: AuthDetails) => {
   const client = await pool.connect();
   try {
     const hash = await hashPassword(authDetails.password);
     await client.query("BEGIN");
     await client.query(queries.addUserToAuth, [authDetails.email, hash]);
     await client.query("COMMIT");
+    return true;
   } catch (e) {
     console.log(e);
     await client.query("ROLLBACK");

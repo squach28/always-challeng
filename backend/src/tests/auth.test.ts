@@ -1,5 +1,5 @@
 import { createServer } from "../utils/server";
-import { isEmailTaken } from "../controllers/auth.controller";
+import { isEmailTaken, registerUser } from "../controllers/auth.controller";
 import { pool } from "../database/db";
 import { AuthDetails } from "../types/AuthDetails";
 import { queries } from "../database/queries";
@@ -29,7 +29,7 @@ describe("auth unit tests", () => {
         } catch (e) {
           console.log(e);
         } finally {
-          await client.query("DELETE FROM auth");
+          await teardown();
           client.release();
         }
       });
@@ -43,4 +43,36 @@ describe("auth unit tests", () => {
       });
     });
   });
+
+  describe("registerUser", () => {
+    describe("given authDetails", () => {
+      it("should return true to indicate successful registration", async () => {
+        const authDetails: AuthDetails = {
+          email: "bob@gmail.com",
+          password: "password123",
+        };
+        try {
+          const result = await registerUser(authDetails);
+          expect(result).toBe(true);
+        } catch (e) {
+          console.log(e);
+        } finally {
+          await teardown();
+        }
+      });
+    });
+  });
 });
+
+const teardown = async () => {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query("DELETE FROM auth");
+    await client.query("COMMIT");
+  } catch (e) {
+    console.log(e);
+  } finally {
+    client.release();
+  }
+};
