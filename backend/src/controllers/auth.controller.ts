@@ -4,8 +4,36 @@ import { queries } from "../database/queries";
 import { AuthDetails } from "../types/AuthDetails";
 import bcrypt from "bcrypt";
 
-export const login = (req: Request, res: Response) => {
-  res.status(503).json({ message: "Not implemented yet" });
+export const login = async (req: Request, res: Response) => {
+  // body with email and password fields are required
+  if (req.body.email === undefined || req.body.password === undefined) {
+    res.status(400).json({ message: "Bad request" });
+    return;
+  }
+
+  // fields cannot be blank
+  if (req.body.email === "" || req.body.password === "") {
+    res.status(400).json({ message: "Bad request" });
+    return;
+  }
+
+  const { email, password } = req.body;
+
+  const emailExists = await doesEmailExist(email);
+
+  if (!emailExists) {
+    res.status(400).json({ message: "User with email not found" });
+    return;
+  }
+
+  const loginResult = await loginUser(email, password);
+
+  if (!loginResult) {
+    res.status(400).json({ message: "Incorrect credentials" });
+    return;
+  }
+
+  res.status(200).json({ message: "Success!" });
 };
 
 export const signup = async (req: Request, res: Response) => {
@@ -20,7 +48,7 @@ export const signup = async (req: Request, res: Response) => {
     res.status(400).json({ message: "Bad request" });
     return;
   }
-  const emailTaken = await isEmailTaken(req.body.email);
+  const emailTaken = await doesEmailExist(req.body.email);
 
   // email must be unique
   if (emailTaken) {
@@ -44,7 +72,7 @@ export const forgotPassword = (req: Request, res: Response) => {
   res.status(503).json({ message: "Not implemented yet" });
 };
 
-export const isEmailTaken = async (email: string) => {
+export const doesEmailExist = async (email: string) => {
   try {
     const result = await pool.query(queries.getUserByEmail, [email]);
     if (result.rows.length > 0) {
@@ -77,6 +105,19 @@ export const registerUser = async (
     return null;
   } finally {
     client.release();
+  }
+};
+
+const loginUser = async (email: string, password: string) => {
+  try {
+    const result = await pool.query(queries.getAuthByEmail, [email]);
+    const user = result.rows[0];
+
+    const loginResult = await bcrypt.compare(password, user.password);
+    return loginResult;
+  } catch (e) {
+    console.log(e);
+    return false;
   }
 };
 
