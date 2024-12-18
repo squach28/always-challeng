@@ -9,12 +9,20 @@ export const login = (req: Request, res: Response) => {
 };
 
 export const signup = async (req: Request, res: Response) => {
+  // body with email and password fields are required
   if (req.body.email === undefined || req.body.password === undefined) {
+    res.status(400).json({ message: "Bad request" });
+    return;
+  }
+
+  // fields cannot be blank
+  if (req.body.email === "" || req.body.password === "") {
     res.status(400).json({ message: "Bad request" });
     return;
   }
   const emailTaken = await isEmailTaken(req.body.email);
 
+  // email must be unique
   if (emailTaken) {
     res.status(400).json({ message: "Email already taken" });
     return;

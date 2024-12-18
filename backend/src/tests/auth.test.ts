@@ -1,3 +1,4 @@
+import supertest from "supertest";
 import { createServer } from "../utils/server";
 import { isEmailTaken, registerUser } from "../controllers/auth.controller";
 import { pool } from "../database/db";
@@ -6,7 +7,78 @@ import { queries } from "../database/queries";
 
 const app = createServer();
 
-describe("auth endpoint tests", () => {});
+describe("auth endpoint tests", () => {
+  describe("POST /auth/signup", () => {
+    describe("given empty body", () => {
+      it("should return 400", async () => {
+        await supertest(app).post("/auth/signup").expect(400);
+      });
+    });
+
+    describe("given data without email", () => {
+      it("should return 400", async () => {
+        const detailsWithoutEmail = {
+          password: "password123",
+        };
+        await supertest(app)
+          .post("/auth/signup")
+          .send(detailsWithoutEmail)
+          .expect(400);
+      });
+    });
+
+    describe("given data without password", () => {
+      it("should return 400", async () => {
+        const detailsWithoutPassword = {
+          email: "bob@gmail.com",
+        };
+        await supertest(app)
+          .post("/auth/signup")
+          .send(detailsWithoutPassword)
+          .expect(400);
+      });
+    });
+
+    describe("given data with blank fields", () => {
+      it("should return 400", async () => {
+        const detailsWithEmptyFields = {
+          email: "",
+          password: "",
+        };
+        await supertest(app)
+          .post("/auth/signup")
+          .send(detailsWithEmptyFields)
+          .expect(400);
+      });
+    });
+
+    describe("given data with blank email", () => {
+      it("should return 400", async () => {
+        const detailsWithEmptyEmail = {
+          email: "",
+          password: "password123",
+        };
+        await supertest(app)
+          .post("/auth/signup")
+          .send(detailsWithEmptyEmail)
+          .expect(400);
+      });
+    });
+
+    describe("given data with blank password", () => {
+      it("should return 400", async () => {
+        const detailsWithEmptyPassword = {
+          email: "",
+          password: "password123",
+        };
+        await supertest(app)
+          .post("/auth/signup")
+          .send(detailsWithEmptyPassword)
+          .expect(400);
+      });
+    });
+  });
+});
 
 describe("auth unit tests", () => {
   describe("isEmailTaken", () => {
