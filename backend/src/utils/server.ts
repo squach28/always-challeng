@@ -1,8 +1,5 @@
 import express, { Request, Response } from "express";
 import { authRouter } from "../routes/auth.route";
-import dotenv from "dotenv";
-
-dotenv.config();
 
 export const createServer = () => {
   const app = express();
