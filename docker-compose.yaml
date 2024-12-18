@@ -5,10 +5,11 @@ services:
       POSTGRES_USERNAME: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
+      PGDATA: /data/pgdata
     ports:
       - 5432:5432
     volumes:
-      - ./data:/pgdata
+      - data:/data/pgdata
 
   backend:
     build:
@@ -21,6 +22,7 @@ services:
       - 3000:3000
     depends_on:
       - database
+    env_file: ./backend/.env
 
 volumes:
-  pgdata:
+  data:
