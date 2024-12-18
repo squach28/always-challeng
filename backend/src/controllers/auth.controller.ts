@@ -36,7 +36,7 @@ export const forgotPassword = (req: Request, res: Response) => {
   res.status(503).json({ message: "Not implemented yet" });
 };
 
-const isEmailTaken = async (email: string) => {
+export const isEmailTaken = async (email: string) => {
   try {
     const result = await pool.query(queries.getUserByEmail, [email]);
     if (result.rows.length > 0) {
