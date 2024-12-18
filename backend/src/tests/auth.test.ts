@@ -1,6 +1,6 @@
 import supertest from "supertest";
 import { createServer } from "../utils/server";
-import { isEmailTaken, registerUser } from "../controllers/auth.controller";
+import { doesEmailExist, registerUser } from "../controllers/auth.controller";
 import { pool } from "../database/db";
 import { AuthDetails } from "../types/AuthDetails";
 import { queries } from "../database/queries";
@@ -8,6 +8,7 @@ import { queries } from "../database/queries";
 const app = createServer();
 
 describe("auth endpoint tests", () => {
+  // /auth/signup
   describe("POST /auth/signup", () => {
     describe("given valid data", () => {
       it("should return 200", async () => {
@@ -94,6 +95,78 @@ describe("auth endpoint tests", () => {
       });
     });
   });
+
+  // /auth/login
+  describe("POST /auth/login", () => {
+    describe("given empty body", () => {
+      it("should return 400", async () => {
+        await supertest(app).post("/auth/login").expect(400);
+      });
+    });
+
+    describe("given data without email", () => {
+      it("should return 400", async () => {
+        const detailsWithoutEmail = {
+          password: "password123",
+        };
+        await supertest(app)
+          .post("/auth/login")
+          .send(detailsWithoutEmail)
+          .expect(400);
+      });
+    });
+
+    describe("given data without password", () => {
+      it("should return 400", async () => {
+        const detailsWithoutPassword = {
+          email: "bob@gmail.com",
+        };
+        await supertest(app)
+          .post("/auth/login")
+          .send(detailsWithoutPassword)
+          .expect(400);
+      });
+    });
+
+    describe("given data with blank fields", () => {
+      it("should return 400", async () => {
+        const detailsWithEmptyFields = {
+          email: "",
+          password: "",
+        };
+        await supertest(app)
+          .post("/auth/login")
+          .send(detailsWithEmptyFields)
+          .expect(400);
+      });
+    });
+
+    describe("given data with blank email", () => {
+      it("should return 400", async () => {
+        const detailsWithEmptyEmail = {
+          email: "",
+          password: "password123",
+        };
+        await supertest(app)
+          .post("/auth/login")
+          .send(detailsWithEmptyEmail)
+          .expect(400);
+      });
+    });
+
+    describe("given data with blank password", () => {
+      it("should return 400", async () => {
+        const detailsWithEmptyPassword = {
+          email: "",
+          password: "password123",
+        };
+        await supertest(app)
+          .post("/auth/login")
+          .send(detailsWithEmptyPassword)
+          .expect(400);
+      });
+    });
+  });
 });
 
 describe("auth unit tests", () => {
@@ -112,7 +185,7 @@ describe("auth unit tests", () => {
             authDetails.password,
           ]);
           await client.query("COMMIT");
-          const emailTaken = await isEmailTaken(authDetails.email);
+          const emailTaken = await doesEmailExist(authDetails.email);
           expect(emailTaken).toBe(true);
         } catch (e) {
           console.log(e);
@@ -126,7 +199,7 @@ describe("auth unit tests", () => {
     describe("given email is not taken", () => {
       it("should return false", async () => {
         const email = "bob@gmail.com";
-        const emailTaken = await isEmailTaken(email);
+        const emailTaken = await doesEmailExist(email);
         expect(emailTaken).toBe(false);
       });
     });
