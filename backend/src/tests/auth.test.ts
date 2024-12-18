@@ -9,6 +9,22 @@ const app = createServer();
 
 describe("auth endpoint tests", () => {
   describe("POST /auth/signup", () => {
+    describe("given valid data", () => {
+      it("should return 200", async () => {
+        const authDetails: AuthDetails = {
+          email: "bob@gmail.com",
+          password: "password123",
+        };
+        const result = await supertest(app)
+          .post("/auth/signup")
+          .send(authDetails)
+          .expect(201);
+        expect(result.body).toHaveProperty("id");
+        expect(result.body.id).toBeTruthy();
+        await teardown();
+      });
+    });
+
     describe("given empty body", () => {
       it("should return 400", async () => {
         await supertest(app).post("/auth/signup").expect(400);
@@ -125,7 +141,7 @@ describe("auth unit tests", () => {
         };
         try {
           const result = await registerUser(authDetails);
-          expect(result).toBe(true);
+          expect(result).toBeTruthy();
         } catch (e) {
           console.log(e);
         } finally {

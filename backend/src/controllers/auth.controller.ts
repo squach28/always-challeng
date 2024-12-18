@@ -33,8 +33,8 @@ export const signup = async (req: Request, res: Response) => {
       password: req.body.password,
     };
 
-    await registerUser(authDetails);
-    res.status(200).json({ message: "Success!" });
+    const id = await registerUser(authDetails);
+    res.status(201).json({ id });
   } catch (e) {
     res.status(500).json({ message: "Something went wrong" });
   }
@@ -57,18 +57,24 @@ export const isEmailTaken = async (email: string) => {
   }
 };
 
-export const registerUser = async (authDetails: AuthDetails) => {
+export const registerUser = async (
+  authDetails: AuthDetails
+): Promise<string | null> => {
   const client = await pool.connect();
   try {
     const hash = await hashPassword(authDetails.password);
     await client.query("BEGIN");
-    await client.query(queries.addUserToAuth, [authDetails.email, hash]);
+    const result = await client.query(queries.addUserToAuth, [
+      authDetails.email,
+      hash,
+    ]);
     await client.query("COMMIT");
-    return true;
+    const { id } = result.rows[0];
+    return id;
   } catch (e) {
     console.log(e);
     await client.query("ROLLBACK");
-    return false;
+    return null;
   } finally {
     client.release();
   }
