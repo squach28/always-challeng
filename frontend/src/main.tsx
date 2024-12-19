@@ -13,12 +13,14 @@ const router = createBrowserRouter([
       {
         path: "login",
         element: <LoginForm />,
+        action: loginAction
       },
       { path: "signup", element: <SignupForm /> },
     ],
   },
   {
     index: true,
+    path: "/",
     element: <App />,
   },
 ]);
