@@ -13,7 +13,7 @@ const router = createBrowserRouter([
       {
         path: "login",
         element: <LoginForm />,
-        action: loginAction
+        action: loginAction,
       },
       { path: "signup", element: <SignupForm /> },
     ],
@@ -25,5 +25,5 @@ const router = createBrowserRouter([
   },
 ]);
 createRoot(document.getElementById("root")!).render(
-  <RouterProvider router={router} />
+  <RouterProvider router={router} />,
 );
