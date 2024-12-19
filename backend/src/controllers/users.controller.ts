@@ -28,7 +28,7 @@ export const addUser = async (req: Request, res: Response) => {
       email: req.body.email,
     };
     await client.query("BEGIN");
-    const result = await addUserDetails(userDetails);
+    await addUserDetails(userDetails);
     await client.query("COMMIT");
     res.status(201).json({ message: "Success" });
   } catch (e) {
@@ -48,8 +48,26 @@ export const removeUserById = (req: Request, res: Response) => {
   res.status(503).json({ message: "Not implemented yet" });
 };
 
-export const getUserById = (req: Request, res: Response) => {
-  res.status(503).json({ message: "Not implemented yet" });
+export const getUserById = async (req: Request, res: Response) => {
+  try {
+    if (req.params.id === undefined) {
+      res.status(400).json({ message: "Bad request" });
+      return;
+    }
+    const { id } = req.params;
+    const user = await getUser(id);
+    if (!user) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    res.status(200).json({ user });
+    return;
+  } catch (e) {
+    console.log(e);
+    res.status(500).json({ message: "Something went wrong" });
+    return;
+  }
 };
 
 export const addUserDetails = async (userDetails: UserDetails) => {
@@ -68,5 +86,14 @@ export const addUserDetails = async (userDetails: UserDetails) => {
     return false;
   } finally {
     client.release();
+  }
+};
+
+const getUser = async (id: string) => {
+  try {
+    const result = await pool.query(queries.getUserById, [id]);
+    return result.rows[0];
+  } catch (e) {
+    return null;
   }
 };

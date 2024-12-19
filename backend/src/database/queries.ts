@@ -5,4 +5,6 @@ export const queries = {
     "INSERT INTO auth (email, password) VALUES ($1, $2) RETURNING id",
   addUser:
     "INSERT INTO users (id, first_name, last_name, email) VALUES ($1, $2, $3, $4)",
+  getUserById:
+    "SELECT id, first_name, last_name, email FROM users WHERE id = $1",
 };
