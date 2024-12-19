@@ -40,8 +40,25 @@ export const addUser = async (req: Request, res: Response) => {
   }
 };
 
-export const updateUserById = (req: Request, res: Response) => {
-  res.status(503).json({ message: "Not implemented yet" });
+export const updateUserById = async (req: Request, res: Response) => {
+  if (req.params.id === undefined) {
+    res.status(400).json({ mesage: "Bad request" });
+    return;
+  }
+
+  if (req.body.firstName === undefined || req.body.lastName === undefined) {
+    res.status(400).json({ mesage: "Bad request" });
+    return;
+  }
+  const { id } = req.params;
+  const { firstName, lastName } = req.body;
+  try {
+    await updateUser(firstName, lastName, id);
+    res.status(201).json({ message: "User updated" });
+  } catch (e) {
+    console.log(e);
+    res.status(500).json({ message: "Something went wrong" });
+  }
 };
 
 export const removeUserById = (req: Request, res: Response) => {
@@ -95,5 +112,21 @@ const getUser = async (id: string) => {
     return result.rows[0];
   } catch (e) {
     return null;
+  }
+};
+
+const updateUser = async (id: string, firstName: string, lastName: string) => {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    client.query(queries.updateUserById, [id, firstName, lastName]);
+    await client.query("COMMIT");
+    return true;
+  } catch (e) {
+    console.log(e);
+    await client.query("ROLLBACK");
+    return false;
+  } finally {
+    client.release();
   }
 };
