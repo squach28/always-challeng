@@ -3,4 +3,6 @@ export const queries = {
   getAuthByEmail: "SELECT email, password FROM auth WHERE email = $1",
   addUserToAuth:
     "INSERT INTO auth (email, password) VALUES ($1, $2) RETURNING id",
+  addUser:
+    "INSERT INTO users (id, first_name, last_name, email) VALUES ($1, $2, $3, $4)",
 };
