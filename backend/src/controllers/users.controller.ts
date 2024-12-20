@@ -92,7 +92,7 @@ export const getUserById = async (req: Request, res: Response) => {
       return;
     }
 
-    res.status(200).json({ user });
+    res.status(200).json(user);
     return;
   } catch (e) {
     console.log(e);
@@ -105,13 +105,14 @@ export const addUserDetails = async (userDetails: UserDetails) => {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    await client.query(queries.addUser, [
+    const result = await client.query(queries.addUser, [
       userDetails.id,
       userDetails.firstName,
       userDetails.lastName,
       userDetails.email,
     ]);
     await client.query("COMMIT");
+    return true;
   } catch (e) {
     await client.query("ROLLBACK");
     return false;
@@ -120,21 +121,41 @@ export const addUserDetails = async (userDetails: UserDetails) => {
   }
 };
 
-const getUser = async (id: string) => {
+export const getUser = async (id: string) => {
   try {
     const result = await pool.query(queries.getUserById, [id]);
-    return result.rows[0];
+    if (result.rows[0] === undefined) {
+      return null;
+    }
+    const user = {
+      id: result.rows[0].id,
+      firstName: result.rows[0].first_name,
+      lastName: result.rows[0].last_name,
+      email: result.rows[0].email,
+    };
+    return user;
   } catch (e) {
     return null;
   }
 };
 
-const updateUser = async (id: string, firstName: string, lastName: string) => {
+export const updateUser = async (
+  id: string,
+  firstName: string,
+  lastName: string
+) => {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    client.query(queries.updateUserById, [firstName, lastName, id]);
+    const result = await client.query(queries.updateUserById, [
+      firstName,
+      lastName,
+      id,
+    ]);
     await client.query("COMMIT");
+    if (result.rowCount === 0) {
+      return false;
+    }
     return true;
   } catch (e) {
     console.log(e);
@@ -145,16 +166,20 @@ const updateUser = async (id: string, firstName: string, lastName: string) => {
   }
 };
 
-const deleteUser = async (id: string) => {
+export const deleteUser = async (id: string) => {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
     const result = await client.query(queries.deleteUserById, [id]);
     await client.query("COMMIT");
+    if (result.rowCount === 0) {
+      return false;
+    }
+    return true;
   } catch (e) {
     console.log(e);
     await client.query("ROLLBACK");
-    throw false;
+    return false;
   } finally {
     client.release();
   }
