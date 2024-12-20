@@ -55,14 +55,28 @@ export const updateUserById = async (req: Request, res: Response) => {
   try {
     await updateUser(firstName, lastName, id);
     res.status(201).json({ message: "User updated" });
+    return;
   } catch (e) {
     console.log(e);
     res.status(500).json({ message: "Something went wrong" });
+    return;
   }
 };
 
-export const removeUserById = (req: Request, res: Response) => {
-  res.status(503).json({ message: "Not implemented yet" });
+export const removeUserById = async (req: Request, res: Response) => {
+  if (req.params.id === undefined) {
+    res.status(400).json({ message: "Bad Request" });
+    return;
+  }
+
+  try {
+    const { id } = req.params;
+    await deleteUser(id);
+    res.status(204).send();
+  } catch (e) {
+    res.status(500).json({ message: "Something went wrong" });
+    return;
+  }
 };
 
 export const getUserById = async (req: Request, res: Response) => {
@@ -119,13 +133,28 @@ const updateUser = async (id: string, firstName: string, lastName: string) => {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    client.query(queries.updateUserById, [id, firstName, lastName]);
+    client.query(queries.updateUserById, [firstName, lastName, id]);
     await client.query("COMMIT");
     return true;
   } catch (e) {
     console.log(e);
     await client.query("ROLLBACK");
     return false;
+  } finally {
+    client.release();
+  }
+};
+
+const deleteUser = async (id: string) => {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const result = await client.query(queries.deleteUserById, [id]);
+    await client.query("COMMIT");
+  } catch (e) {
+    console.log(e);
+    await client.query("ROLLBACK");
+    throw false;
   } finally {
     client.release();
   }

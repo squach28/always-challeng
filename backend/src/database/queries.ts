@@ -8,5 +8,6 @@ export const queries = {
   getUserById:
     "SELECT id, first_name, last_name, email FROM users WHERE id = $1",
   updateUserById:
-    "UPDATE users SET first_name = $1, last_name = $2 WHERE id = $3",
+    "UPDATE users SET first_name = $1, last_name = $2 WHERE id = CAST ($3 AS UUID)",
+  deleteUserById: "DELETE FROM users WHERE id::text = $1",
 };
