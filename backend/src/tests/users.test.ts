@@ -1,3 +1,4 @@
+import supertest from "supertest";
 import { registerUser } from "../controllers/auth.controller";
 import {
   addUserDetails,
@@ -8,9 +9,111 @@ import {
 import { pool } from "../database/db";
 import { AuthDetails } from "../types/AuthDetails";
 import { UserDetails } from "../types/UserDetails";
+import { createServer } from "../utils/server";
+
+const app = createServer();
 
 // TODO: finish endpoint tests
-describe("users endpoints tests", () => {});
+describe("users endpoints tests", () => {
+  describe("POST /users", () => {
+    afterEach(async () => {
+      await teardown();
+    });
+
+    describe("given all missing fields", () => {
+      it("should return 400", async () => {
+        await supertest(app).post("/users").send({}).expect(400);
+      });
+    });
+
+    describe("given missing id", () => {
+      it("should return 400", async () => {
+        const detailsWithoutId = {
+          email: "bob@gmail.com",
+          firstName: "Bob",
+          lastName: "Jenkins",
+        };
+        await supertest(app).post("/users").send(detailsWithoutId).expect(400);
+      });
+    });
+
+    describe("given missing firstName", () => {
+      it("should return 400", async () => {
+        const detailsWithoutFirstName = {
+          id: "94376268-1f12-4914-8f5e-c989bd4ee3b1",
+          email: "bob@gmail.com",
+          lastName: "Jenkins",
+        };
+        await supertest(app)
+          .post("/users")
+          .send(detailsWithoutFirstName)
+          .expect(400);
+      });
+    });
+
+    describe("given missing lastName", () => {
+      it("should return 400", async () => {
+        const detailsWithoutLastName = {
+          id: "94376268-1f12-4914-8f5e-c989bd4ee3b1",
+          email: "bob@gmail.com",
+          firstName: "Bob",
+        };
+        await supertest(app)
+          .post("/users")
+          .send(detailsWithoutLastName)
+          .expect(400);
+      });
+    });
+
+    describe("given missing email", () => {
+      it("should return 400", async () => {
+        const detailsWithoutEmail = {
+          id: "94376268-1f12-4914-8f5e-c989bd4ee3b1",
+          firstName: "Bob",
+          lastName: "Jenkins",
+        };
+        await supertest(app)
+          .post("/users")
+          .send(detailsWithoutEmail)
+          .expect(400);
+      });
+    });
+
+    describe("given valid data, but user isn't in auth table", () => {
+      it("should return 400?", async () => {
+        const userDetails: UserDetails = {
+          id: "94376268-1f12-4914-8f5e-c989bd4ee3b1",
+          firstName: "Bob",
+          lastName: "Jenkins",
+          email: "bob@gmail.com",
+        };
+
+        const result = await supertest(app).post("/users").send(userDetails);
+        expect(result.body).toHaveProperty("message");
+      });
+    });
+
+    describe("given valid data and user is in auth table", () => {
+      it("should return 201", async () => {
+        const authDetails: AuthDetails = {
+          email: "bob@gmail.com",
+          password: "password123",
+        };
+        const newUserId = await registerUser(authDetails);
+        expect(newUserId).not.toBe(null);
+
+        const userDetails: UserDetails = {
+          id: newUserId as string,
+          email: authDetails.email,
+          firstName: "Bob",
+          lastName: "Jenkins",
+        };
+
+        await supertest(app).post("/users").send(userDetails).expect(201);
+      });
+    });
+  });
+});
 // Users unit tests
 describe("users unit tests", () => {
   afterEach(async () => {

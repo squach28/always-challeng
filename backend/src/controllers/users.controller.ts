@@ -19,7 +19,6 @@ export const addUser = async (req: Request, res: Response) => {
     return;
   }
 
-  const client = await pool.connect();
   try {
     const userDetails: UserDetails = {
       id: req.body.id,
@@ -27,16 +26,16 @@ export const addUser = async (req: Request, res: Response) => {
       lastName: req.body.lastName,
       email: req.body.email,
     };
-    await client.query("BEGIN");
-    await addUserDetails(userDetails);
-    await client.query("COMMIT");
+    const result = await addUserDetails(userDetails);
+    if (!result) {
+      res.status(400).json({ message: "User doesn't exist" });
+      return;
+    }
     res.status(201).json({ message: "Success" });
   } catch (e) {
     console.log(e);
-    await client.query("ROLLBACK");
     res.status(500).json({ message: "Something went wrong" });
   } finally {
-    client.release();
   }
 };
 
@@ -105,7 +104,7 @@ export const addUserDetails = async (userDetails: UserDetails) => {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    const result = await client.query(queries.addUser, [
+    await client.query(queries.addUser, [
       userDetails.id,
       userDetails.firstName,
       userDetails.lastName,
