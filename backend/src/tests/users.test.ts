@@ -113,6 +113,38 @@ describe("users endpoints tests", () => {
       });
     });
   });
+
+  describe("GET /users/:id", () => {
+    describe("given user with id doesn't exist", () => {
+      it("should return 404", async () => {
+        const userId = "94376268-1f12-4914-8f5e-c989bd4ee3b1";
+        await supertest(app).get(`/users/${userId}`).expect(404);
+      });
+    });
+
+    describe("given user with id does exist", () => {
+      it("should return 200", async () => {
+        const authDetails: AuthDetails = {
+          email: "bob@gmail.com",
+          password: "password123",
+        };
+        const newUserId = await registerUser(authDetails);
+        expect(newUserId).not.toBe(null);
+
+        const userDetails: UserDetails = {
+          id: newUserId as string,
+          email: authDetails.email,
+          firstName: "Bob",
+          lastName: "Jenkins",
+        };
+
+        const userDetailsAdded = await addUserDetails(userDetails);
+        expect(userDetailsAdded).toBe(true);
+
+        await supertest(app).get(`/users/${newUserId}`).expect(200);
+      });
+    });
+  });
 });
 // Users unit tests
 describe("users unit tests", () => {
