@@ -52,7 +52,11 @@ export const updateUserById = async (req: Request, res: Response) => {
   const { id } = req.params;
   const { firstName, lastName } = req.body;
   try {
-    await updateUser(firstName, lastName, id);
+    const result = await updateUser(firstName, lastName, id);
+    if (!result) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
     res.status(201).json({ message: "User updated" });
     return;
   } catch (e) {
@@ -70,7 +74,12 @@ export const removeUserById = async (req: Request, res: Response) => {
 
   try {
     const { id } = req.params;
-    await deleteUser(id);
+    const result = await deleteUser(id);
+    console.log("result", result);
+    if (!result) {
+      res.status(404).json({ message: "User doesn't exist" });
+      return;
+    }
     res.status(204).send();
   } catch (e) {
     res.status(500).json({ message: "Something went wrong" });

@@ -13,13 +13,12 @@ import { createServer } from "../utils/server";
 
 const app = createServer();
 
-// TODO: finish endpoint tests
 describe("users endpoints tests", () => {
-  describe("POST /users", () => {
-    afterEach(async () => {
-      await teardown();
-    });
+  afterEach(async () => {
+    await teardown();
+  });
 
+  describe("POST /users", () => {
     describe("given all missing fields", () => {
       it("should return 400", async () => {
         await supertest(app).post("/users").send({}).expect(400);
@@ -142,6 +141,52 @@ describe("users endpoints tests", () => {
         expect(userDetailsAdded).toBe(true);
 
         await supertest(app).get(`/users/${newUserId}`).expect(200);
+      });
+    });
+  });
+
+  describe("PUT /users/:id", () => {
+    describe("given user doesn't exist", () => {
+      it("should return 404", async () => {
+        const userId = "94376268-1f12-4914-8f5e-c989bd4ee3b1";
+        const newUserData = {
+          firstName: "John",
+          lastName: "Jones",
+        };
+        await supertest(app)
+          .put(`/users/${userId}`)
+          .send(newUserData)
+          .expect(404);
+      });
+    });
+  });
+
+  describe("DELETE /users/:id", () => {
+    describe("given user doesn't exist", () => {
+      it("should return 404", async () => {
+        const userId = "94376268-1f12-4914-8f5e-c989bd4ee3b1";
+        await supertest(app).delete(`/users/${userId}`).expect(404);
+      });
+    });
+    describe("given user does exist", () => {
+      it("should return 204", async () => {
+        const authDetails: AuthDetails = {
+          email: "bob@gmail.com",
+          password: "password123",
+        };
+        const newUserId = await registerUser(authDetails);
+        expect(newUserId).not.toBe(null);
+
+        const userDetails: UserDetails = {
+          id: newUserId as string,
+          email: authDetails.email,
+          firstName: "Bob",
+          lastName: "Jenkins",
+        };
+
+        await addUserDetails(userDetails);
+
+        await supertest(app).delete(`/users/${newUserId}`).expect(204);
       });
     });
   });
